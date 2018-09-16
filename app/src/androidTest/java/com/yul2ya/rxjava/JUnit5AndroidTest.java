@@ -23,23 +23,18 @@ public class JUnit5AndroidTest {
         Observable<String> authToken = Observable.just("authToken");
 
         Observable<Pair<String, FakeTemplateApp>> getTemplateApp = authToken
-                .flatMap((String token) -> Observable.just(FakeAmbientService.getTemplateApp(token)),
-                        (token, data) -> {
-                            return new Pair<>(token, data);
-                        });
+                .flatMap(token -> Observable.just(FakeAmbientService.getTemplateApp(token)),
+                        Pair::new);
 
         getTemplateApp.doOnNext(Log::i)
-                .test();
+                .test()
+                .assertComplete();
 
         Observable<Pair<FakeTemplateApp, File>> downloadResources = authToken
                 .flatMap((String token) -> Observable.just(FakeAmbientService.getTemplateApp(token)),
-                        (token, data) -> {
-                            return new Pair<>(token, data);
-                        })
-                .flatMap((Pair<String, FakeTemplateApp> pair) -> {
-                            return downloadTemplateResource(pair.first, pair.second);
-                        },
-                        (Pair<String, FakeTemplateApp> pair, File file) -> new Pair<>(pair.second, file));
+                        Pair::new)
+                .flatMap(pair -> downloadTemplateResource(pair.first, pair.second),
+                        (pair, file) -> new Pair<>(pair.second, file));
 
         Observable<FakeTemplateApp> unzipResources = downloadResources
                 .flatMap(pair -> {
