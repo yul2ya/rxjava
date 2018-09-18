@@ -6,15 +6,9 @@ import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import com.yul2ya.rxjava.common.Log;
 import com.yul2ya.rxjava.rest.TestService;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import io.reactivex.Observable;
 import okhttp3.OkHttpClient;
@@ -24,6 +18,8 @@ import okio.BufferedSink;
 import okio.Okio;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+
+import static com.yul2ya.rxjava.ZipFileManager.unzip;
 
 public class FakeAmbientService {
 
@@ -66,16 +62,9 @@ public class FakeAmbientService {
         BufferedSink sink = Okio.buffer(Okio.sink(file));
         sink.writeAll(response.body().source());
         sink.close();
-        if (!unpackZip(file.getAbsolutePath())) {
-            Log.e("Error! unpack Zip file");
-            throw new IOException();
-        }
-        Log.i("unpack Zip file is success!");
-        Log.i(file.getAbsolutePath());
-        File firstUrl = new File(file.getAbsoluteFile().getParentFile().getPath(), "Test-master/firstUrl");
-        logFileContents(firstUrl);
 
-        return firstUrl;
+        Log.i(file.getAbsolutePath());
+        return file;
     }
 
     private static void logFileContents(File file) throws IOException {
@@ -90,7 +79,7 @@ public class FakeAmbientService {
     }
 
     private static void logZipFileContents(File file) throws IOException {
-        if (!unpackZip(file.getAbsolutePath())) return;
+        if (!unzip(file.getAbsolutePath())) return;
         FileReader reader = new FileReader(file);
         int singleChar = -1;
         StringBuilder contents = new StringBuilder();
@@ -99,48 +88,5 @@ public class FakeAmbientService {
         }
         Log.i(contents);
         reader.close();
-    }
-
-    public static boolean unpackZip(String filePath) {
-        InputStream is;
-        ZipInputStream zis;
-        try {
-
-            File zipFile = new File(filePath);
-            String parentFolder = zipFile.getParentFile().getPath();
-            String filename;
-
-            is = new FileInputStream(filePath);
-            zis = new ZipInputStream(new BufferedInputStream(is));
-            ZipEntry ze;
-            byte[] buffer = new byte[1024];
-            int count;
-
-            while ((ze = zis.getNextEntry()) != null) {
-                filename = ze.getName();
-
-                if (ze.isDirectory()) {
-                    File fmd = new File(parentFolder + "/" + filename);
-                    fmd.mkdirs();
-                    continue;
-                }
-
-                FileOutputStream fout = new FileOutputStream(parentFolder + "/" + filename);
-
-                while ((count = zis.read(buffer)) != -1) {
-                    fout.write(buffer, 0, count);
-                }
-
-                fout.close();
-                zis.closeEntry();
-            }
-
-            zis.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        return true;
     }
 }

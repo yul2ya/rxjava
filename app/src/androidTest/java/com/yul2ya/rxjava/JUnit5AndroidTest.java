@@ -15,6 +15,7 @@ import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
 
 import static com.yul2ya.rxjava.FakeAmbientService.downloadTemplateResource;
+import static com.yul2ya.rxjava.ZipFileManager.unzip;
 
 @RunWith(AndroidJUnit4.class)
 public class JUnit5AndroidTest {
@@ -38,7 +39,7 @@ public class JUnit5AndroidTest {
 
         Observable<FakeTemplateApp> unzipResources = downloadResources
                 .flatMap(pair -> {
-                    FakeAmbientService.unpackZip(pair.second.getAbsolutePath());
+                    unzip(pair.second.getAbsolutePath());
                     return Observable.just(pair.first);
                 });
 
